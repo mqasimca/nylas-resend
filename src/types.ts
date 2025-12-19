@@ -32,7 +32,7 @@ export interface SendEmailRequest {
   /** HTML body */
   html?: string;
   /** Reply-to address(es) */
-  reply_to?: string | string[];
+  replyTo?: string | string[];
   /** CC recipients */
   cc?: string | string[];
   /** BCC recipients */
@@ -44,18 +44,20 @@ export interface SendEmailRequest {
   /** Tags for categorization */
   tags?: Tag[];
   /** Scheduled send time (ISO 8601) */
-  scheduled_at?: string;
+  scheduledAt?: string;
 }
 
 export interface Attachment {
   /** Filename */
   filename: string;
   /** File content (base64 string or Buffer) */
-  content: string | Buffer;
+  content?: string | Buffer;
+  /** Path to file (alternative to content) */
+  path?: string;
   /** MIME type (optional, defaults to application/octet-stream) */
-  content_type?: string;
-  /** Content-Disposition (optional) */
-  disposition?: 'attachment' | 'inline';
+  contentType?: string;
+  /** Content ID for inline attachments */
+  contentId?: string;
 }
 
 export interface Tag {
@@ -75,13 +77,13 @@ export interface GetEmailResponse {
   to: string[];
   cc?: string[];
   bcc?: string[];
-  reply_to?: string[];
+  replyTo?: string[];
   subject: string;
   text?: string;
   html?: string;
-  created_at: string;
-  scheduled_at?: string;
-  last_event?: string;
+  createdAt: string;
+  scheduledAt?: string;
+  lastEvent?: string;
 }
 
 export interface ListEmailsResponse {
@@ -105,7 +107,7 @@ export type WebhookEventType =
 
 export interface WebhookEvent<T extends WebhookEventType = WebhookEventType> {
   type: T;
-  created_at: string;
+  createdAt: string;
   data: WebhookEventData;
 }
 
@@ -115,17 +117,17 @@ export interface WebhookEventData {
   to: string[];
   cc?: string[];
   bcc?: string[];
-  reply_to?: string[];
+  replyTo?: string[];
   subject: string;
   text?: string;
   html?: string;
-  created_at?: string;
+  createdAt?: string;
   attachments?: WebhookAttachment[];
 }
 
 export interface WebhookAttachment {
   filename: string;
-  content_type: string;
+  contentType: string;
   size?: number;
 }
 

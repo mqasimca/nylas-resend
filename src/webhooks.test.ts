@@ -47,7 +47,7 @@ describe('webhooks', () => {
 
       expect(result).not.toBeNull();
       expect(result!.type).toBe('email.received');
-      expect(result!.created_at).toBe('2024-01-15T10:30:00Z');
+      expect(result!.createdAt).toBe('2024-01-15T10:30:00Z');
       expect(result!.data.id).toBe('msg_789');
       expect(result!.data.from).toBe('John Doe <john@example.com>');
       expect(result!.data.to).toEqual(['inbox@app.nylas.email']);
@@ -62,7 +62,7 @@ describe('webhooks', () => {
       expect(result!.data.attachments).toHaveLength(1);
       expect(result!.data.attachments![0]).toEqual({
         filename: 'document.pdf',
-        content_type: 'application/pdf',
+        contentType: 'application/pdf',
         size: 12345,
       });
     });
@@ -166,7 +166,7 @@ describe('webhooks', () => {
     it('should return true for email.received events', () => {
       const event: InboundEmailEvent = {
         type: 'email.received',
-        created_at: '2024-01-15T10:30:00Z',
+        createdAt: '2024-01-15T10:30:00Z',
         data: {
           id: 'msg_123',
           from: 'sender@example.com',
@@ -185,7 +185,7 @@ describe('webhooks', () => {
     it('should return false for other event types', () => {
       const event = {
         type: 'email.sent',
-        created_at: '2024-01-15T10:30:00Z',
+        createdAt: '2024-01-15T10:30:00Z',
         data: {},
       };
 

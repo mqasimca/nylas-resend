@@ -28,8 +28,8 @@ Drop-in replacement for the [Resend](https://resend.com) SDK that uses [Nylas In
 |---------------|-----------|-------|
 | `emails.send()` with text/html | ✅ Seamless | No code changes needed |
 | `emails.send()` with attachments | ✅ Seamless | Works identically |
-| CC, BCC, reply_to | ✅ Seamless | Full support |
-| Scheduled emails (`scheduled_at`) | ✅ Seamless | Full support |
+| CC, BCC, replyTo | ✅ Seamless | Full support |
+| Scheduled emails (`scheduledAt`) | ✅ Seamless | Full support |
 | `emails.get()` / `emails.list()` | ✅ Seamless | Full support |
 | Inbound webhooks (`email.received`) | ✅ Seamless | Use `handleInboundWebhook()` |
 | Custom headers | ⚠️ Warning | Headers ignored, warning logged |
@@ -299,7 +299,7 @@ const { data, error } = await resend.emails.send({
     {
       filename: 'invoice-12345.pdf',
       content: readFileSync('./invoices/12345.pdf').toString('base64'),
-      content_type: 'application/pdf'
+      contentType: 'application/pdf'
     }
   ]
 });
@@ -317,17 +317,17 @@ const { data, error } = await resend.emails.send({
     {
       filename: 'sales-report.xlsx',
       content: salesReportBase64,
-      content_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     },
     {
       filename: 'analytics.pdf',
       content: analyticsPdfBase64,
-      content_type: 'application/pdf'
+      contentType: 'application/pdf'
     },
     {
       filename: 'summary.csv',
       content: Buffer.from(csvContent).toString('base64'),
-      content_type: 'text/csv'
+      contentType: 'text/csv'
     }
   ]
 });
@@ -363,7 +363,7 @@ const { data, error } = await resend.emails.send({
     'account-manager@your-app.com'
   ],
   bcc: 'records@your-app.com',
-  reply_to: 'support@your-app.com',
+  replyTo: 'support@your-app.com',
   subject: 'Your Quote Request',
   html: '<p>Thank you for your interest! Here is your quote...</p>'
 });
@@ -381,7 +381,7 @@ const { data, error } = await resend.emails.send({
   to: 'user@example.com',
   subject: 'Your appointment is tomorrow',
   html: '<p>This is a reminder about your appointment tomorrow at 10 AM.</p>',
-  scheduled_at: '2024-12-25T10:00:00Z'  // ISO 8601 format
+  scheduledAt: '2024-12-25T10:00:00Z'  // ISO 8601 format
 });
 
 if (data) {
@@ -400,7 +400,7 @@ const { data, error } = await resend.emails.send({
   to: 'user@example.com',
   subject: 'Follow-up',
   text: 'Just following up on our conversation.',
-  scheduled_at: oneHourFromNow
+  scheduledAt: oneHourFromNow
 });
 ```
 
@@ -550,9 +550,9 @@ const { data, error } = await resend.emails.send({
   html?: string,                   // HTML body
   cc?: string | string[],          // CC recipients
   bcc?: string | string[],         // BCC recipients
-  reply_to?: string | string[],    // Reply-to address(es)
+  replyTo?: string | string[],     // Reply-to address(es)
   attachments?: Attachment[],      // File attachments
-  scheduled_at?: string            // ISO 8601 datetime for scheduled send
+  scheduledAt?: string             // ISO 8601 datetime for scheduled send
 });
 
 // Returns: { data: { id: string }, error: null } or { data: null, error: Error }
@@ -727,10 +727,10 @@ Some Resend features are not supported by the Nylas API:
 | Feature | Supported | Notes |
 |---------|-----------|-------|
 | `from`, `to`, `cc`, `bcc` | ✅ | Full support |
-| `reply_to` | ✅ | Full support |
+| `replyTo` | ✅ | Full support |
 | `subject`, `text`, `html` | ✅ | Full support |
 | `attachments` | ✅ | Base64 or Buffer content |
-| `scheduled_at` | ✅ | Maps to Nylas `send_at` |
+| `scheduledAt` | ✅ | Maps to Nylas `send_at` |
 | `emails.send()` | ✅ | Full support |
 | `emails.get(id)` | ✅ | Full support |
 | `emails.list()` | ✅ | Full support |

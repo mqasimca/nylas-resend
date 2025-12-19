@@ -174,13 +174,13 @@ describe('transformSendRequest', () => {
     ]);
   });
 
-  it('should transform reply_to', () => {
+  it('should transform replyTo', () => {
     const request: SendEmailRequest = {
       from: 'sender@example.com',
       to: 'recipient@example.com',
       subject: 'Test',
       text: 'Hello',
-      reply_to: 'Reply Person <reply@example.com>',
+      replyTo: 'Reply Person <reply@example.com>',
     };
 
     const result = transformSendRequest(request);
@@ -199,7 +199,7 @@ describe('transformSendRequest', () => {
         {
           filename: 'test.txt',
           content: 'SGVsbG8gV29ybGQ=', // base64
-          content_type: 'text/plain',
+          contentType: 'text/plain',
         },
       ],
     };
@@ -234,13 +234,13 @@ describe('transformSendRequest', () => {
     expect(result.attachments?.[0].content_type).toBe('application/octet-stream');
   });
 
-  it('should transform scheduled_at to send_at timestamp', () => {
+  it('should transform scheduledAt to send_at timestamp', () => {
     const request: SendEmailRequest = {
       from: 'sender@example.com',
       to: 'recipient@example.com',
       subject: 'Test',
       text: 'Hello',
-      scheduled_at: '2024-12-25T10:00:00Z',
+      scheduledAt: '2024-12-25T10:00:00Z',
     };
 
     const result = transformSendRequest(request);
@@ -365,12 +365,12 @@ describe('transformMessageToEmail', () => {
       to: ['jane@example.com'],
       cc: ['cc@example.com'],
       bcc: [],
-      reply_to: [],
+      replyTo: [],
       subject: 'Test Subject',
       text: '<p>Hello World</p>',
       html: '<p>Hello World</p>',
-      created_at: new Date(1702915200 * 1000).toISOString(),
-      last_event: 'email.sent',
+      createdAt: new Date(1702915200 * 1000).toISOString(),
+      lastEvent: 'email.sent',
     });
   });
 
@@ -487,7 +487,7 @@ describe('transformWebhookToInboundEvent', () => {
     const result = transformWebhookToInboundEvent(mockPayload);
 
     expect(result.type).toBe('email.received');
-    expect(result.created_at).toBe('2024-01-15T10:30:00Z');
+    expect(result.createdAt).toBe('2024-01-15T10:30:00Z');
     expect(result.data.id).toBe('msg_789');
     expect(result.data.from).toBe('John Doe <john@example.com>');
     expect(result.data.to).toEqual(['inbox@app.nylas.email']);
@@ -502,7 +502,7 @@ describe('transformWebhookToInboundEvent', () => {
     expect(result.data.attachments).toHaveLength(1);
     expect(result.data.attachments?.[0]).toEqual({
       filename: 'document.pdf',
-      content_type: 'application/pdf',
+      contentType: 'application/pdf',
       size: 12345,
     });
   });

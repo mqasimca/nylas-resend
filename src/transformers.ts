@@ -115,7 +115,7 @@ export function transformSendRequest(request: SendEmailRequest): NylasSendReques
     nylasRequest.bcc = bcc;
   }
 
-  const replyTo = toParticipants(request.reply_to);
+  const replyTo = toParticipants(request.replyTo);
   if (replyTo?.length) {
     nylasRequest.reply_to = replyTo;
   }
@@ -127,15 +127,15 @@ export function transformSendRequest(request: SendEmailRequest): NylasSendReques
       content:
         typeof att.content === 'string'
           ? att.content
-          : att.content.toString('base64'),
-      content_type: att.content_type || 'application/octet-stream',
-      ...(att.disposition === 'inline' ? { content_id: att.filename } : {}),
+          : att.content?.toString('base64') || '',
+      content_type: att.contentType || 'application/octet-stream',
+      ...(att.contentId ? { content_id: att.contentId } : {}),
     }));
   }
 
   // Scheduled send
-  if (request.scheduled_at) {
-    const timestamp = new Date(request.scheduled_at).getTime();
+  if (request.scheduledAt) {
+    const timestamp = new Date(request.scheduledAt).getTime();
     if (!isNaN(timestamp)) {
       nylasRequest.send_at = Math.floor(timestamp / 1000);
     }
@@ -170,12 +170,12 @@ export function transformMessageToEmail(message: NylasMessage): GetEmailResponse
     to: participantsToEmails(message.to),
     cc: participantsToEmails(message.cc),
     bcc: participantsToEmails(message.bcc),
-    reply_to: participantsToEmails(message.reply_to),
+    replyTo: participantsToEmails(message.reply_to),
     subject: message.subject,
     text: message.body,
     html: message.body,
-    created_at: new Date(message.date * 1000).toISOString(),
-    last_event: 'email.sent',
+    createdAt: new Date(message.date * 1000).toISOString(),
+    lastEvent: 'email.sent',
   };
 }
 
@@ -225,21 +225,21 @@ export function transformWebhookToInboundEvent(
 
   return {
     type: 'email.received',
-    created_at: payload.time,
+    createdAt: payload.time,
     data: {
       id: message.id,
       from: message.from[0] ? formatParticipant(message.from[0]) : '',
       to: participantsToEmails(message.to),
       cc: participantsToEmails(message.cc),
       bcc: participantsToEmails(message.bcc),
-      reply_to: participantsToEmails(message.reply_to),
+      replyTo: participantsToEmails(message.reply_to),
       subject: message.subject,
       text: message.body,
       html: message.body,
-      created_at: payload.time,
+      createdAt: payload.time,
       attachments: message.attachments?.map((att) => ({
         filename: att.filename,
-        content_type: att.content_type,
+        contentType: att.content_type,
         size: att.size,
       })),
     },
