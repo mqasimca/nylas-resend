@@ -6,8 +6,10 @@
  *
  * Required environment variables:
  *   NYLAS_API_KEY - Your Nylas API key
- *   NYLAS_GRANT_ID - Your Nylas grant ID
- *   NYLAS_TEST_EMAIL - Email address for testing (used as both from and to)
+ *   NYLAS_INBOUND_GRANT_ID - Your Nylas grant ID for inbound email
+ *   NYLAS_INBOUND_EMAIL - Email address for sending from (e.g., info@qasim.nylas.email)
+ *   NYLAS_INBOUND_DOMAIN - Domain for sending transactional emails (e.g., qasim.nylas.email)
+ *                          If not set, will be extracted from NYLAS_INBOUND_EMAIL
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -16,10 +18,14 @@ import type { NylasWebhookPayload } from './types.js';
 
 // Skip integration tests if credentials not provided
 const NYLAS_API_KEY = process.env.NYLAS_API_KEY;
-const NYLAS_GRANT_ID = process.env.NYLAS_GRANT_ID;
-const NYLAS_TEST_EMAIL = process.env.NYLAS_TEST_EMAIL;
+const NYLAS_INBOUND_GRANT_ID = process.env.NYLAS_INBOUND_GRANT_ID;
+const NYLAS_INBOUND_EMAIL = process.env.NYLAS_INBOUND_EMAIL;
+// Extract domain from email if NYLAS_INBOUND_DOMAIN is not set
+const NYLAS_INBOUND_DOMAIN = process.env.NYLAS_INBOUND_DOMAIN ||
+  (NYLAS_INBOUND_EMAIL ? NYLAS_INBOUND_EMAIL.split('@')[1] : undefined);
+const TEST_RECIPIENT = 'qasim.m@nylas.com';
 
-const hasCredentials = NYLAS_API_KEY && NYLAS_GRANT_ID && NYLAS_TEST_EMAIL;
+const hasCredentials = NYLAS_API_KEY && NYLAS_INBOUND_GRANT_ID && NYLAS_INBOUND_EMAIL && NYLAS_INBOUND_DOMAIN;
 
 describe.skipIf(!hasCredentials)('Integration Tests', () => {
   let resend: Resend;
@@ -28,15 +34,16 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
   beforeAll(() => {
     resend = new Resend({
       apiKey: NYLAS_API_KEY!,
-      grantId: NYLAS_GRANT_ID!,
+      grantId: NYLAS_INBOUND_GRANT_ID!,
+      domain: NYLAS_INBOUND_DOMAIN!,
     });
   });
 
   describe('emails.send', () => {
     it('should send a basic email successfully', async () => {
       const { data, error } = await resend.emails.send({
-        from: NYLAS_TEST_EMAIL!,
-        to: NYLAS_TEST_EMAIL!,
+        from: NYLAS_INBOUND_EMAIL!,
+        to: TEST_RECIPIENT,
         subject: `Integration Test - ${new Date().toISOString()}`,
         text: 'This is a test email from nylas-resend integration tests.',
         html: '<p>This is a test email from <strong>nylas-resend</strong> integration tests.</p>',
@@ -57,9 +64,9 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
 
     it('should send email with CC', async () => {
       const { data, error } = await resend.emails.send({
-        from: NYLAS_TEST_EMAIL!,
-        to: NYLAS_TEST_EMAIL!,
-        cc: NYLAS_TEST_EMAIL!,
+        from: NYLAS_INBOUND_EMAIL!,
+        to: TEST_RECIPIENT,
+        cc: TEST_RECIPIENT,
         subject: `Integration Test CC - ${new Date().toISOString()}`,
         text: 'Testing CC functionality.',
       });
@@ -75,9 +82,9 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
 
     it('should send email with BCC', async () => {
       const { data, error } = await resend.emails.send({
-        from: NYLAS_TEST_EMAIL!,
-        to: NYLAS_TEST_EMAIL!,
-        bcc: NYLAS_TEST_EMAIL!,
+        from: NYLAS_INBOUND_EMAIL!,
+        to: TEST_RECIPIENT,
+        bcc: TEST_RECIPIENT,
         subject: `Integration Test BCC - ${new Date().toISOString()}`,
         text: 'Testing BCC functionality.',
       });
@@ -93,9 +100,9 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
 
     it('should send email with replyTo', async () => {
       const { data, error } = await resend.emails.send({
-        from: NYLAS_TEST_EMAIL!,
-        to: NYLAS_TEST_EMAIL!,
-        replyTo: NYLAS_TEST_EMAIL!,
+        from: NYLAS_INBOUND_EMAIL!,
+        to: TEST_RECIPIENT,
+        replyTo: NYLAS_INBOUND_EMAIL!,
         subject: `Integration Test Reply-To - ${new Date().toISOString()}`,
         html: '<p>Testing <strong>replyTo</strong> functionality.</p>',
       });
@@ -111,8 +118,8 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
 
     it('should send email to multiple recipients', async () => {
       const { data, error } = await resend.emails.send({
-        from: NYLAS_TEST_EMAIL!,
-        to: [NYLAS_TEST_EMAIL!, NYLAS_TEST_EMAIL!],
+        from: NYLAS_INBOUND_EMAIL!,
+        to: [TEST_RECIPIENT],
         subject: `Integration Test Multiple Recipients - ${new Date().toISOString()}`,
         text: 'Testing multiple recipients functionality.',
       });
@@ -130,8 +137,8 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
       const testContent = Buffer.from('Hello, this is a test attachment!').toString('base64');
 
       const { data, error } = await resend.emails.send({
-        from: NYLAS_TEST_EMAIL!,
-        to: NYLAS_TEST_EMAIL!,
+        from: NYLAS_INBOUND_EMAIL!,
+        to: TEST_RECIPIENT,
         subject: `Integration Test Attachment - ${new Date().toISOString()}`,
         text: 'Testing attachment functionality.',
         attachments: [
@@ -157,8 +164,8 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
       const csvContent = Buffer.from('name,email\nJohn,john@example.com').toString('base64');
 
       const { data, error } = await resend.emails.send({
-        from: NYLAS_TEST_EMAIL!,
-        to: NYLAS_TEST_EMAIL!,
+        from: NYLAS_INBOUND_EMAIL!,
+        to: TEST_RECIPIENT,
         subject: `Integration Test Multiple Attachments - ${new Date().toISOString()}`,
         html: '<p>Testing <strong>multiple attachments</strong>.</p>',
         attachments: [
@@ -189,8 +196,8 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
       const scheduledTime = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
       const { data, error } = await resend.emails.send({
-        from: NYLAS_TEST_EMAIL!,
-        to: NYLAS_TEST_EMAIL!,
+        from: NYLAS_INBOUND_EMAIL!,
+        to: TEST_RECIPIENT,
         subject: `Integration Test Scheduled - ${new Date().toISOString()}`,
         text: 'Testing scheduled email functionality.',
         scheduledAt: scheduledTime,
@@ -210,11 +217,11 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
       const attachmentContent = Buffer.from('Combined test attachment').toString('base64');
 
       const { data, error } = await resend.emails.send({
-        from: `Test Sender <${NYLAS_TEST_EMAIL!}>`,
-        to: [NYLAS_TEST_EMAIL!],
-        cc: NYLAS_TEST_EMAIL!,
-        bcc: NYLAS_TEST_EMAIL!,
-        replyTo: NYLAS_TEST_EMAIL!,
+        from: `Test Sender <${NYLAS_INBOUND_EMAIL!}>`,
+        to: [TEST_RECIPIENT],
+        cc: TEST_RECIPIENT,
+        bcc: TEST_RECIPIENT,
+        replyTo: NYLAS_INBOUND_EMAIL!,
         subject: `Integration Test Combined - ${new Date().toISOString()}`,
         text: 'Plain text version of the email.',
         html: `
@@ -251,12 +258,13 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
     it('should handle invalid API key', async () => {
       const invalidResend = new Resend({
         apiKey: 'invalid_key',
-        grantId: NYLAS_GRANT_ID!,
+        grantId: NYLAS_INBOUND_GRANT_ID!,
+        domain: NYLAS_INBOUND_DOMAIN!,
       });
 
       const { data, error } = await invalidResend.emails.send({
-        from: NYLAS_TEST_EMAIL!,
-        to: NYLAS_TEST_EMAIL!,
+        from: NYLAS_INBOUND_EMAIL!,
+        to: TEST_RECIPIENT,
         subject: 'Should fail',
         text: 'This should not be sent.',
       });
@@ -270,7 +278,7 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
     it('should return validation error for missing from', async () => {
       const { data, error } = await resend.emails.send({
         from: '',
-        to: NYLAS_TEST_EMAIL!,
+        to: TEST_RECIPIENT,
         subject: 'Test',
         text: 'Hello',
       });
@@ -284,7 +292,7 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
 
     it('should return validation error for missing to', async () => {
       const { data, error } = await resend.emails.send({
-        from: NYLAS_TEST_EMAIL!,
+        from: NYLAS_INBOUND_EMAIL!,
         to: [],
         subject: 'Test',
         text: 'Hello',
@@ -299,8 +307,8 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
 
     it('should return validation error for missing subject', async () => {
       const { data, error } = await resend.emails.send({
-        from: NYLAS_TEST_EMAIL!,
-        to: NYLAS_TEST_EMAIL!,
+        from: NYLAS_INBOUND_EMAIL!,
+        to: TEST_RECIPIENT,
         subject: '',
         text: 'Hello',
       });
@@ -393,8 +401,9 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
 
       expect(data).toBeNull();
       expect(error).toBeDefined();
-      expect(error?.statusCode).toBe(404);
-      console.log('✅ Non-existent email ID correctly returned 404');
+      // Nylas API returns 400 for invalid message IDs
+      expect(error?.statusCode).toBe(400);
+      console.log('✅ Non-existent email ID correctly returned 400');
     });
 
     it('should return validation error for empty ID', async () => {
@@ -626,7 +635,7 @@ describe('Client Configuration Integration Tests', () => {
 describe.skipIf(hasCredentials)('Integration Tests (Skipped)', () => {
   it('should skip when credentials are not provided', () => {
     console.log(
-      '⚠️ API Integration tests skipped. Set NYLAS_API_KEY, NYLAS_GRANT_ID, and NYLAS_TEST_EMAIL to run.'
+      '⚠️ API Integration tests skipped. Set NYLAS_API_KEY, NYLAS_INBOUND_GRANT_ID, NYLAS_INBOUND_EMAIL, and optionally NYLAS_INBOUND_DOMAIN to run.'
     );
     expect(true).toBe(true);
   });

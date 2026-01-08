@@ -15,6 +15,8 @@ import type {
 import {
   transformSendRequest,
   transformSendResponse,
+  transformDomainSendRequest,
+  transformDomainSendResponse,
   transformMessageToEmail,
 } from './transformers.js';
 
@@ -48,6 +50,9 @@ export class Emails {
 
   /**
    * Send an email
+   *
+   * Uses domain-based send for Nylas Inbound (transactional emails),
+   * or grant-based send for OAuth-connected providers (Gmail, Outlook, etc.)
    *
    * @example
    * ```typescript
@@ -92,15 +97,24 @@ export class Emails {
         };
       }
 
-      // Transform and send
-      const nylasRequest = transformSendRequest(request);
-      const response = await this.client.sendMessage(nylasRequest);
-      const resendResponse = transformSendResponse(response);
-
-      return {
-        data: resendResponse,
-        error: null,
-      };
+      // Use domain-based send for Nylas Inbound, otherwise use grant-based send
+      if (this.client.hasDomain()) {
+        const nylasRequest = transformDomainSendRequest(request);
+        const response = await this.client.sendDomainMessage(nylasRequest);
+        const resendResponse = transformDomainSendResponse(response);
+        return {
+          data: resendResponse,
+          error: null,
+        };
+      } else {
+        const nylasRequest = transformSendRequest(request);
+        const response = await this.client.sendMessage(nylasRequest);
+        const resendResponse = transformSendResponse(response);
+        return {
+          data: resendResponse,
+          error: null,
+        };
+      }
     } catch (err) {
       return {
         data: null,

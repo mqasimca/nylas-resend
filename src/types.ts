@@ -10,8 +10,10 @@
 export interface ResendConfig {
   /** Nylas API key */
   apiKey: string;
-  /** Nylas Grant ID */
+  /** Nylas Grant ID (for reading messages) */
   grantId: string;
+  /** Nylas Domain name for sending transactional emails (e.g., "qasim.nylas.email") */
+  domain?: string;
   /** Base URL for Nylas API (default: https://api.us.nylas.com) */
   baseUrl?: string;
 }
@@ -249,5 +251,39 @@ export interface NylasApiError {
   error: {
     type: string;
     message: string;
+  };
+}
+
+// ============================================================================
+// Nylas Domain-based Send Types (for Inbound/Transactional emails)
+// ============================================================================
+
+export interface NylasDomainSendRequest {
+  /** Sender information (must be from a verified domain) */
+  from: NylasEmailParticipant;
+  /** Recipients */
+  to: NylasEmailParticipant[];
+  /** CC recipients */
+  cc?: NylasEmailParticipant[];
+  /** BCC recipients */
+  bcc?: NylasEmailParticipant[];
+  /** Email subject */
+  subject?: string;
+  /** HTML body content */
+  body?: string;
+  /** When true, sends as plain text instead of HTML */
+  is_plaintext?: boolean;
+  /** Template configuration */
+  template?: {
+    id: string;
+    strict?: boolean;
+    variables?: Record<string, string>;
+  };
+}
+
+export interface NylasDomainSendResponse {
+  request_id: string;
+  data: {
+    id: string;
   };
 }

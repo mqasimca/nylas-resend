@@ -9,10 +9,12 @@ describe('Emails', () => {
   beforeEach(() => {
     mockClient = {
       sendMessage: vi.fn(),
+      sendDomainMessage: vi.fn(),
       getMessage: vi.fn(),
       listMessages: vi.fn(),
       getGrantId: vi.fn(() => 'test_grant_id'),
       getBaseUrl: vi.fn(() => 'https://api.us.nylas.com'),
+      hasDomain: vi.fn(() => false),
     } as unknown as NylasClient;
 
     emails = new Emails(mockClient);

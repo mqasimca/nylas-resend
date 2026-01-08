@@ -2,6 +2,8 @@ import type {
   ResendConfig,
   NylasSendRequest,
   NylasSendResponse,
+  NylasDomainSendRequest,
+  NylasDomainSendResponse,
   NylasMessageResponse,
   NylasMessagesListResponse,
   NylasApiError,
@@ -13,6 +15,8 @@ const API_VERSION = 'v3';
 export interface NylasClientOptions {
   apiKey: string;
   grantId: string;
+  /** Domain name for sending transactional emails (e.g., "qasim.nylas.email") */
+  domain?: string;
   baseUrl?: string;
   /** Custom fetch implementation (useful for testing) */
   fetch?: typeof fetch;
@@ -21,12 +25,14 @@ export interface NylasClientOptions {
 export class NylasClient {
   private readonly apiKey: string;
   private readonly grantId: string;
+  private readonly domain?: string;
   private readonly baseUrl: string;
   private readonly fetchFn: typeof fetch;
 
   constructor(options: NylasClientOptions) {
     this.apiKey = options.apiKey;
     this.grantId = options.grantId;
+    this.domain = options.domain;
     this.baseUrl = (options.baseUrl || DEFAULT_BASE_URL).replace(/\/$/, '');
     this.fetchFn = options.fetch || fetch;
   }
@@ -89,7 +95,7 @@ export class NylasClient {
   }
 
   /**
-   * Send an email message
+   * Send an email message via grant (for OAuth-connected providers)
    */
   async sendMessage(data: NylasSendRequest): Promise<NylasSendResponse> {
     return this.request<NylasSendResponse>(
@@ -97,6 +103,27 @@ export class NylasClient {
       `${this.grantPath}/messages/send`,
       data
     );
+  }
+
+  /**
+   * Send a transactional email via domain (for Nylas Inbound)
+   */
+  async sendDomainMessage(data: NylasDomainSendRequest): Promise<NylasDomainSendResponse> {
+    if (!this.domain) {
+      throw new Error('Domain is required for sending transactional emails. Set the domain option in config.');
+    }
+    return this.request<NylasDomainSendResponse>(
+      'POST',
+      `/domains/${this.domain}/messages/send`,
+      data
+    );
+  }
+
+  /**
+   * Check if domain-based sending is configured
+   */
+  hasDomain(): boolean {
+    return !!this.domain;
   }
 
   /**
@@ -139,6 +166,13 @@ export class NylasClient {
   getBaseUrl(): string {
     return this.baseUrl;
   }
+
+  /**
+   * Get the configured domain
+   */
+  getDomain(): string | undefined {
+    return this.domain;
+  }
 }
 
 /**
@@ -170,6 +204,7 @@ export function createNylasClient(config: ResendConfig): NylasClient {
   return new NylasClient({
     apiKey: config.apiKey,
     grantId: config.grantId,
+    domain: config.domain,
     baseUrl: config.baseUrl,
   });
 }

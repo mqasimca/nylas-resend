@@ -10,6 +10,8 @@ import type {
   NylasEmailParticipant,
   NylasSendRequest,
   NylasSendResponse,
+  NylasDomainSendRequest,
+  NylasDomainSendResponse,
   NylasMessage,
   NylasWebhookPayload,
 } from './types.js';
@@ -153,6 +155,76 @@ export function transformSendRequest(request: SendEmailRequest): NylasSendReques
  */
 export function transformSendResponse(
   response: NylasSendResponse
+): SendEmailResponse {
+  return {
+    id: response.data.id,
+  };
+}
+
+/**
+ * Transform a Resend SendEmailRequest to Nylas domain-based send format
+ * Used for Nylas Inbound transactional emails
+ */
+export function transformDomainSendRequest(request: SendEmailRequest): NylasDomainSendRequest {
+  // Warn about unsupported features for domain-based sends
+  if (request.headers && Object.keys(request.headers).length > 0) {
+    console.warn(
+      'nylas-resend: Custom headers are not supported by Nylas domain send API. Headers will be ignored.'
+    );
+  }
+
+  if (request.tags && request.tags.length > 0) {
+    console.warn(
+      'nylas-resend: Tags are not supported by Nylas API. Tags will be ignored.'
+    );
+  }
+
+  if (request.attachments && request.attachments.length > 0) {
+    console.warn(
+      'nylas-resend: Attachments are not supported by Nylas domain send API. Attachments will be ignored.'
+    );
+  }
+
+  if (request.scheduledAt) {
+    console.warn(
+      'nylas-resend: Scheduled send is not supported by Nylas domain send API. scheduledAt will be ignored.'
+    );
+  }
+
+  if (request.replyTo) {
+    console.warn(
+      'nylas-resend: Reply-to is not supported by Nylas domain send API. replyTo will be ignored.'
+    );
+  }
+
+  const nylasRequest: NylasDomainSendRequest = {
+    from: parseEmailAddress(request.from),
+    to: toParticipants(request.to)!,
+    subject: request.subject,
+    body: request.html || request.text || '',
+    is_plaintext: !request.html && !!request.text,
+  };
+
+  // Optional CC
+  const cc = toParticipants(request.cc);
+  if (cc?.length) {
+    nylasRequest.cc = cc;
+  }
+
+  // Optional BCC
+  const bcc = toParticipants(request.bcc);
+  if (bcc?.length) {
+    nylasRequest.bcc = bcc;
+  }
+
+  return nylasRequest;
+}
+
+/**
+ * Transform Nylas domain send response to Resend format
+ */
+export function transformDomainSendResponse(
+  response: NylasDomainSendResponse
 ): SendEmailResponse {
   return {
     id: response.data.id,

@@ -66,6 +66,8 @@ export {
   formatParticipant,
   transformSendRequest,
   transformSendResponse,
+  transformDomainSendRequest,
+  transformDomainSendResponse,
   transformMessageToEmail,
   transformWebhookToInboundEvent,
   isNylasMessageWebhook,
@@ -80,13 +82,14 @@ export { NylasRequestError } from './client.js';
  *
  * @example
  * ```typescript
- * // With config object
+ * // With config object (for Nylas Inbound transactional emails)
  * const resend = new Resend({
  *   apiKey: 'nylas_api_key',
- *   grantId: 'nylas_grant_id'
+ *   grantId: 'nylas_grant_id',
+ *   domain: 'your-domain.nylas.email'
  * });
  *
- * // With environment variables (apiKey only, NYLAS_GRANT_ID must be set)
+ * // With environment variables (apiKey only, NYLAS_GRANT_ID and optionally NYLAS_DOMAIN must be set)
  * const resend = new Resend('nylas_api_key');
  * ```
  */
@@ -110,6 +113,7 @@ export class Resend {
       this.client = createNylasClient({
         apiKey: config,
         grantId,
+        domain: process.env.NYLAS_DOMAIN,
         baseUrl: process.env.NYLAS_API_URL,
       });
     } else {
@@ -138,6 +142,13 @@ export class Resend {
    */
   getBaseUrl(): string {
     return this.client.getBaseUrl();
+  }
+
+  /**
+   * Get the configured domain (if any)
+   */
+  getDomain(): string | undefined {
+    return this.client.getDomain();
   }
 }
 
