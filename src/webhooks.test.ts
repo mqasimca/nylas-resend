@@ -47,13 +47,13 @@ describe('webhooks', () => {
 
       expect(result).not.toBeNull();
       expect(result!.type).toBe('email.received');
-      expect(result!.createdAt).toBe('2024-01-15T10:30:00Z');
-      expect(result!.data.id).toBe('msg_789');
+      expect(result!.created_at).toBe('2024-01-15T10:30:00Z');
+      expect(result!.data.email_id).toBe('msg_789');
       expect(result!.data.from).toBe('John Doe <john@example.com>');
       expect(result!.data.to).toEqual(['inbox@app.nylas.email']);
       expect(result!.data.cc).toEqual(['cc@example.com']);
       expect(result!.data.subject).toBe('Test Inbound Email');
-      expect(result!.data.html).toBe('<p>Hello World!</p>');
+      expect(result!.data.message_id).toBe('msg_789');
     });
 
     it('should include attachments in transformed event', () => {
@@ -61,9 +61,11 @@ describe('webhooks', () => {
 
       expect(result!.data.attachments).toHaveLength(1);
       expect(result!.data.attachments![0]).toEqual({
+        id: 'att_001',
         filename: 'document.pdf',
-        contentType: 'application/pdf',
-        size: 12345,
+        content_type: 'application/pdf',
+        content_disposition: 'attachment',
+        content_id: undefined,
       });
     });
 
@@ -158,7 +160,7 @@ describe('webhooks', () => {
       expect(result).not.toBeNull();
       expect(result!.data.cc).toEqual([]);
       expect(result!.data.bcc).toEqual([]);
-      expect(result!.data.attachments).toBeUndefined();
+      expect(result!.data.attachments).toEqual([]);
     });
   });
 
@@ -166,12 +168,17 @@ describe('webhooks', () => {
     it('should return true for email.received events', () => {
       const event: InboundEmailEvent = {
         type: 'email.received',
-        createdAt: '2024-01-15T10:30:00Z',
+        created_at: '2024-01-15T10:30:00Z',
         data: {
-          id: 'msg_123',
+          email_id: 'msg_123',
+          created_at: '2024-01-15T10:30:00Z',
           from: 'sender@example.com',
           to: ['recipient@example.com'],
+          cc: [],
+          bcc: [],
+          message_id: 'msg_123',
           subject: 'Test',
+          attachments: [],
         },
       };
 
@@ -185,7 +192,7 @@ describe('webhooks', () => {
     it('should return false for other event types', () => {
       const event = {
         type: 'email.sent',
-        createdAt: '2024-01-15T10:30:00Z',
+        created_at: '2024-01-15T10:30:00Z',
         data: {},
       };
 

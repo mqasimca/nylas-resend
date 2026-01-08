@@ -177,6 +177,7 @@ export class Emails {
       return {
         data: {
           object: 'list',
+          has_more: !!response.next_cursor,
           data: emails,
         },
         error: null,

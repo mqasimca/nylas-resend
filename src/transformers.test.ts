@@ -364,13 +364,14 @@ describe('transformMessageToEmail', () => {
       from: 'John Doe <john@example.com>',
       to: ['jane@example.com'],
       cc: ['cc@example.com'],
-      bcc: [],
-      replyTo: [],
+      bcc: null,
+      reply_to: null,
       subject: 'Test Subject',
       text: '<p>Hello World</p>',
       html: '<p>Hello World</p>',
-      createdAt: new Date(1702915200 * 1000).toISOString(),
-      lastEvent: 'email.sent',
+      created_at: new Date(1702915200 * 1000).toISOString(),
+      scheduled_at: null,
+      last_event: 'sent',
     });
   });
 
@@ -487,13 +488,13 @@ describe('transformWebhookToInboundEvent', () => {
     const result = transformWebhookToInboundEvent(mockPayload);
 
     expect(result.type).toBe('email.received');
-    expect(result.createdAt).toBe('2024-01-15T10:30:00Z');
-    expect(result.data.id).toBe('msg_789');
+    expect(result.created_at).toBe('2024-01-15T10:30:00Z');
+    expect(result.data.email_id).toBe('msg_789');
     expect(result.data.from).toBe('John Doe <john@example.com>');
     expect(result.data.to).toEqual(['inbox@app.nylas.email']);
     expect(result.data.cc).toEqual(['cc@example.com']);
     expect(result.data.subject).toBe('Test Inbound Email');
-    expect(result.data.html).toBe('<p>Hello from outside!</p>');
+    expect(result.data.message_id).toBe('msg_789');
   });
 
   it('should transform attachments', () => {
@@ -501,9 +502,11 @@ describe('transformWebhookToInboundEvent', () => {
 
     expect(result.data.attachments).toHaveLength(1);
     expect(result.data.attachments?.[0]).toEqual({
+      id: 'att_001',
       filename: 'document.pdf',
-      contentType: 'application/pdf',
-      size: 12345,
+      content_type: 'application/pdf',
+      content_disposition: 'attachment',
+      content_id: undefined,
     });
   });
 
@@ -520,7 +523,7 @@ describe('transformWebhookToInboundEvent', () => {
     };
 
     const result = transformWebhookToInboundEvent(payloadWithoutAttachments);
-    expect(result.data.attachments).toBeUndefined();
+    expect(result.data.attachments).toEqual([]);
   });
 
   it('should handle empty from array', () => {

@@ -235,19 +235,24 @@ export function transformDomainSendResponse(
  * Transform Nylas message to Resend GetEmailResponse format
  */
 export function transformMessageToEmail(message: NylasMessage): GetEmailResponse {
+  const cc = participantsToEmails(message.cc);
+  const bcc = participantsToEmails(message.bcc);
+  const replyTo = participantsToEmails(message.reply_to);
+
   return {
     id: message.id,
     object: 'email',
     from: message.from[0] ? formatParticipant(message.from[0]) : '',
     to: participantsToEmails(message.to),
-    cc: participantsToEmails(message.cc),
-    bcc: participantsToEmails(message.bcc),
-    replyTo: participantsToEmails(message.reply_to),
+    cc: cc.length > 0 ? cc : null,
+    bcc: bcc.length > 0 ? bcc : null,
+    reply_to: replyTo.length > 0 ? replyTo : null,
     subject: message.subject,
-    text: message.body,
-    html: message.body,
-    createdAt: new Date(message.date * 1000).toISOString(),
-    lastEvent: 'email.sent',
+    text: message.body || null,
+    html: message.body || null,
+    created_at: new Date(message.date * 1000).toISOString(),
+    scheduled_at: null,
+    last_event: 'sent',
   };
 }
 
@@ -297,23 +302,23 @@ export function transformWebhookToInboundEvent(
 
   return {
     type: 'email.received',
-    createdAt: payload.time,
+    created_at: payload.time,
     data: {
-      id: message.id,
+      email_id: message.id,
+      created_at: payload.time,
       from: message.from[0] ? formatParticipant(message.from[0]) : '',
       to: participantsToEmails(message.to),
       cc: participantsToEmails(message.cc),
       bcc: participantsToEmails(message.bcc),
-      replyTo: participantsToEmails(message.reply_to),
+      message_id: message.id,
       subject: message.subject,
-      text: message.body,
-      html: message.body,
-      createdAt: payload.time,
       attachments: message.attachments?.map((att) => ({
+        id: att.id,
         filename: att.filename,
-        contentType: att.content_type,
-        size: att.size,
-      })),
+        content_type: att.content_type,
+        content_disposition: (att.is_inline ? 'inline' : 'attachment') as 'inline' | 'attachment',
+        content_id: att.content_id,
+      })) || [],
     },
   };
 }

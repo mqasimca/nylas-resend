@@ -362,7 +362,7 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
         expect(email.to).toBeDefined();
         expect(Array.isArray(email.to)).toBe(true);
         expect(email.subject).toBeDefined();
-        expect(email.createdAt).toBeDefined();
+        expect(email.created_at).toBeDefined();
         console.log('✅ Email structure is correct');
       }
     });
@@ -392,7 +392,7 @@ describe.skipIf(!hasCredentials)('Integration Tests', () => {
       expect(data?.from).toBeDefined();
       expect(data?.to).toBeDefined();
       expect(data?.subject).toBeDefined();
-      expect(data?.createdAt).toBeDefined();
+      expect(data?.created_at).toBeDefined();
       console.log('✅ Got email by ID:', emailId);
     });
 
@@ -470,30 +470,32 @@ describe('Webhook Transformation Integration Tests', () => {
     // Verify transformation
     expect(result).not.toBeNull();
     expect(result!.type).toBe('email.received');
-    expect(result!.createdAt).toBe('2024-01-15T10:30:00Z');
+    expect(result!.created_at).toBe('2024-01-15T10:30:00Z');
 
     // Check data fields
-    expect(result!.data.id).toBe('msg_integration_test');
+    expect(result!.data.email_id).toBe('msg_integration_test');
+    expect(result!.data.message_id).toBe('msg_integration_test');
     expect(result!.data.from).toBe('External Sender <external@example.com>');
     expect(result!.data.to).toEqual(['inbox@your-app.nylas.email']);
     expect(result!.data.cc).toEqual(['cc@example.com']);
     expect(result!.data.bcc).toEqual(['bcc@example.com']);
-    expect(result!.data.replyTo).toEqual(['reply@example.com']);
     expect(result!.data.subject).toBe('Inbound Email Test');
-    expect(result!.data.html).toBe('<p>This is an inbound email for integration testing.</p>');
-    expect(result!.data.text).toBe('<p>This is an inbound email for integration testing.</p>');
 
     // Check attachments
     expect(result!.data.attachments).toHaveLength(2);
     expect(result!.data.attachments![0]).toEqual({
+      id: 'att_001',
       filename: 'report.pdf',
-      contentType: 'application/pdf',
-      size: 54321,
+      content_type: 'application/pdf',
+      content_disposition: 'attachment',
+      content_id: undefined,
     });
     expect(result!.data.attachments![1]).toEqual({
+      id: 'att_002',
       filename: 'image.png',
-      contentType: 'image/png',
-      size: 12345,
+      content_type: 'image/png',
+      content_disposition: 'attachment',
+      content_id: undefined,
     });
 
     console.log('✅ Webhook transformation complete');
@@ -529,8 +531,7 @@ describe('Webhook Transformation Integration Tests', () => {
     expect(result!.data.from).toBe('sender@example.com');
     expect(result!.data.cc).toEqual([]);
     expect(result!.data.bcc).toEqual([]);
-    expect(result!.data.replyTo).toEqual([]);
-    expect(result!.data.attachments).toBeUndefined();
+    expect(result!.data.attachments).toEqual([]);
 
     console.log('✅ Minimal webhook transformation complete');
   });

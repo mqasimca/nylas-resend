@@ -218,14 +218,15 @@ describe('Emails', () => {
         object: 'email',
         from: 'Sender <sender@example.com>',
         to: ['recipient@example.com'],
-        cc: [],
-        bcc: [],
-        replyTo: [],
+        cc: null,
+        bcc: null,
+        reply_to: null,
         subject: 'Test Subject',
         text: '<p>Hello World</p>',
         html: '<p>Hello World</p>',
-        createdAt: new Date(1702915200 * 1000).toISOString(),
-        lastEvent: 'email.sent',
+        created_at: new Date(1702915200 * 1000).toISOString(),
+        scheduled_at: null,
+        last_event: 'sent',
       });
       expect(result.error).toBeNull();
     });

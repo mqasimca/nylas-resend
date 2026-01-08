@@ -77,19 +77,31 @@ export interface GetEmailResponse {
   object: 'email';
   from: string;
   to: string[];
-  cc?: string[];
-  bcc?: string[];
-  replyTo?: string[];
+  cc: string[] | null;
+  bcc: string[] | null;
+  reply_to: string[] | null;
   subject: string;
-  text?: string;
-  html?: string;
-  createdAt: string;
-  scheduledAt?: string;
-  lastEvent?: string;
+  text: string | null;
+  html: string | null;
+  created_at: string;
+  scheduled_at: string | null;
+  last_event:
+    | 'bounced'
+    | 'canceled'
+    | 'clicked'
+    | 'complained'
+    | 'delivered'
+    | 'delivery_delayed'
+    | 'failed'
+    | 'opened'
+    | 'queued'
+    | 'scheduled'
+    | 'sent';
 }
 
 export interface ListEmailsResponse {
   object: 'list';
+  has_more: boolean;
   data: GetEmailResponse[];
 }
 
@@ -109,28 +121,28 @@ export type WebhookEventType =
 
 export interface WebhookEvent<T extends WebhookEventType = WebhookEventType> {
   type: T;
-  createdAt: string;
+  created_at: string;
   data: WebhookEventData;
 }
 
 export interface WebhookEventData {
-  id: string;
+  email_id: string;
+  created_at: string;
   from: string;
   to: string[];
-  cc?: string[];
-  bcc?: string[];
-  replyTo?: string[];
+  cc: string[];
+  bcc: string[];
+  message_id: string;
   subject: string;
-  text?: string;
-  html?: string;
-  createdAt?: string;
-  attachments?: WebhookAttachment[];
+  attachments: WebhookAttachment[];
 }
 
 export interface WebhookAttachment {
+  id: string;
   filename: string;
-  contentType: string;
-  size?: number;
+  content_type: string;
+  content_disposition: 'inline' | 'attachment';
+  content_id?: string;
 }
 
 export interface InboundEmailEvent extends WebhookEvent<'email.received'> {
