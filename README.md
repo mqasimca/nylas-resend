@@ -27,9 +27,10 @@ Drop-in replacement for the [Resend](https://resend.com) SDK that uses [Nylas In
 | If you use... | Migration | Notes |
 |---------------|-----------|-------|
 | `emails.send()` with text/html | ✅ Seamless | No code changes needed |
-| `emails.send()` with attachments | ✅ Seamless | Works identically |
-| CC, BCC, replyTo | ✅ Seamless | Full support |
-| Scheduled emails (`scheduledAt`) | ✅ Seamless | Full support |
+| `emails.send()` with attachments | ✅ Grant-based | Not supported with domain-based send |
+| CC, BCC | ✅ Seamless | Full support |
+| replyTo | ✅ Grant-based | Not supported with domain-based send |
+| Scheduled emails (`scheduledAt`) | ✅ Grant-based | Not supported with domain-based send |
 | `emails.get()` / `emails.list()` | ✅ Seamless | Full support |
 | Inbound webhooks (`email.received`) | ✅ Seamless | Use `handleInboundWebhook()` |
 | Custom headers | ⚠️ Warning | Headers ignored, warning logged |
@@ -48,7 +49,8 @@ Drop-in replacement for the [Resend](https://resend.com) SDK that uses [Nylas In
 - const resend = new Resend('re_123456789');
 + const resend = new Resend({
 +   apiKey: process.env.NYLAS_API_KEY,
-+   grantId: process.env.NYLAS_GRANT_ID
++   grantId: process.env.NYLAS_GRANT_ID,
++   domain: process.env.NYLAS_DOMAIN  // Optional: for transactional emails
 + });
 
 // Everything else stays the same!
@@ -176,9 +178,18 @@ const resend = new Resend('re_123456789');
 ```typescript
 import { Resend } from 'nylas-resend';
 
+// For transactional emails (Nylas Inbound)
+const resend = new Resend({
+  apiKey: process.env.NYLAS_API_KEY,
+  grantId: process.env.NYLAS_GRANT_ID,
+  domain: process.env.NYLAS_DOMAIN  // e.g., "your-app.nylas.email"
+});
+
+// Or for OAuth-connected providers (Gmail, Outlook, etc.)
 const resend = new Resend({
   apiKey: process.env.NYLAS_API_KEY,
   grantId: process.env.NYLAS_GRANT_ID
+  // No domain = uses grant-based send with full feature support
 });
 ```
 
@@ -530,12 +541,17 @@ app.post('/webhook', async (req, res) => {
 const resend = new Resend({
   apiKey: string,           // Required: Nylas API key
   grantId: string,          // Required: Nylas Grant ID
+  domain?: string,          // Optional: Domain for transactional emails (e.g., "your-app.nylas.email")
   baseUrl?: string          // Optional: API base URL (default: https://api.us.nylas.com)
 });
 
-// With API key string (requires NYLAS_GRANT_ID env var)
+// With API key string (requires NYLAS_GRANT_ID env var, optionally NYLAS_DOMAIN)
 const resend = new Resend('nylas_api_key');
 ```
+
+**Send Mode Selection:**
+- If `domain` is provided: Uses domain-based send (`/domains/{domain}/messages/send`) for transactional emails
+- If `domain` is not provided: Uses grant-based send (`/grants/{id}/messages/send`) with full feature support
 
 ### resend.emails.send(options)
 
@@ -690,7 +706,8 @@ The `handleInboundWebhook()` function transforms Nylas webhooks to match Resend'
 
 | Resend | Nylas |
 |--------|-------|
-| `resend.emails.send()` | `POST /v3/grants/{id}/messages/send` |
+| `resend.emails.send()` (with domain) | `POST /v3/domains/{domain}/messages/send` |
+| `resend.emails.send()` (without domain) | `POST /v3/grants/{id}/messages/send` |
 | `resend.emails.get(id)` | `GET /v3/grants/{id}/messages/{mid}` |
 | `resend.emails.list()` | `GET /v3/grants/{id}/messages` |
 | Webhook `email.received` | Webhook `message.created` |
@@ -724,18 +741,20 @@ Some Resend features are not supported by the Nylas API:
 
 ### Feature Support Matrix
 
-| Feature | Supported | Notes |
-|---------|-----------|-------|
-| `from`, `to`, `cc`, `bcc` | ✅ | Full support |
-| `replyTo` | ✅ | Full support |
-| `subject`, `text`, `html` | ✅ | Full support |
-| `attachments` | ✅ | Base64 or Buffer content |
-| `scheduledAt` | ✅ | Maps to Nylas `send_at` |
-| `emails.send()` | ✅ | Full support |
-| `emails.get(id)` | ✅ | Full support |
-| `emails.list()` | ✅ | Full support |
-| Inbound webhooks | ✅ | `message.created` → `email.received` |
-| Webhook signature verification | ⚠️ | Placeholder - implement HMAC-SHA256 or use Nylas SDK |
+| Feature | Grant-based | Domain-based | Notes |
+|---------|-------------|--------------|-------|
+| `from`, `to`, `cc`, `bcc` | ✅ | ✅ | Full support |
+| `replyTo` | ✅ | ❌ | Not supported with domain-based send |
+| `subject`, `text`, `html` | ✅ | ✅ | Full support |
+| `attachments` | ✅ | ❌ | Not supported with domain-based send |
+| `scheduledAt` | ✅ | ❌ | Not supported with domain-based send |
+| `emails.send()` | ✅ | ✅ | Full support |
+| `emails.get(id)` | ✅ | ✅ | Full support |
+| `emails.list()` | ✅ | ✅ | Full support |
+| Inbound webhooks | ✅ | ✅ | `message.created` → `email.received` |
+| Webhook signature verification | ⚠️ | ⚠️ | Placeholder - implement HMAC-SHA256 or use Nylas SDK |
+
+**Note:** Domain-based send is for Nylas Inbound transactional emails. Grant-based send is for OAuth-connected providers (Gmail, Outlook, etc.) with full feature support.
 
 ---
 
@@ -747,6 +766,7 @@ NYLAS_API_KEY=your_api_key_here
 NYLAS_GRANT_ID=your_grant_id_here
 
 # Optional
+NYLAS_DOMAIN=your-app.nylas.email      # For transactional emails (Nylas Inbound)
 NYLAS_API_URL=https://api.eu.nylas.com  # For EU region
 ```
 
